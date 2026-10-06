@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta name="csrf-token" content="{{ csrf_token }}">
+  <title>Password Reuse Risk Analyzer</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <main id="main" class="shell">
+    <header>
+      <p class="eyebrow">LOCAL-ONLY SECURITY CHECK &middot; v{{ version }}</p>
+      <h1>Password reuse, made visible.</h1>
+      <p class="lede">Find reused, similar, weak and stale passwords across your accounts. Plaintext is never saved &mdash; only a device-bound, slow-hashed fingerprint is stored.</p>
+      <ul class="chips" id="status-chips" aria-label="Privacy status"></ul>
+    </header>
+
+    <section class="panel" aria-labelledby="add-title">
+      <h2 id="add-title">Add an account</h2>
+      <form id="entry-form" class="grid-form" autocomplete="off">
+        <label>Platform
+          <input name="platform" id="f-platform" required minlength="2" maxlength="80" placeholder="e.g. GitHub">
+        </label>
+        <label>Username or email <span class="opt">(optional)</span>
+          <input name="username" id="f-username" maxlength="120" placeholder="e.g. me@example.com">
+        </label>
+        <div class="full field">
+          <label for="f-password">Password</label>
+          <div class="pw-row">
+            <input name="password" id="f-password" type="password" required maxlength="256" autocomplete="new-password" aria-describedby="f-strength-text">
+            <button type="button" class="ghost" id="toggle-pw" aria-pressed="false">Show</button>
+            <button type="button" class="ghost" id="gen-pw">Generate</button>
+          </div>
+          <div class="live" id="f-live" hidden>
+            <div class="meter" aria-hidden="true"><span id="f-meter"></span></div>
+            <p id="f-strength-text" class="strength-text"></p>
+            <ul id="f-tips" class="tips"></ul>
+          </div>
+        </div>
+        <label>Account sensitivity
+          <select name="sensitivity" id="f-sensitivity">
+            <option value="standard">Standard</option>
+            <option value="important">Important</option>
+            <option value="critical">Critical (email, banking, identity)</option>
+          </select>
+        </label>
+        <label class="check"><input type="checkbox" name="mfa" id="f-mfa"> Two-factor authentication is on</label>
+        <div class="full actions">
+          <button type="submit" class="primary">Analyze locally</button>
+          <p id="form-message" class="message" role="status" aria-live="polite"></p>
+        </div>
+      </form>
+    </section>
+
+    <section class="summary" aria-label="Risk summary">
+      <article class="gauge-card">
+        <div class="gauge" id="gauge" role="img" aria-label="Password health score"><span id="health-score">&ndash;</span><small id="health-grade"></small></div>
+        <p>Password health</p>
+      </article>
+      <div class="stats">
+        <article><span id="accounts">0</span>accounts tracked</article>
+        <article><span id="reused">0</span>accounts sharing a password</article>
+        <article><span id="similar">0</span>accounts with look-alike passwords</article>
+        <article><span id="weak">0</span>weak passwords</article>
+        <article><span id="stale">0</span>passwords not changed in <b id="stale-days">180</b>+ days</article>
+        <article><span id="mfa">&ndash;</span>important accounts with 2FA</article>
+      </div>
+    </section>
+
+    <section class="panel" aria-labelledby="recs-title">
+      <div class="section-title"><h2 id="recs-title">What to fix first</h2><p>Ordered by impact.</p></div>
+      <ol id="recs" class="recs"></ol>
+    </section>
+
+    <section class="panel" aria-labelledby="alerts-title">
+      <div class="section-title"><h2 id="alerts-title">Reuse alerts</h2><p>Same password, or the same password with small changes.</p></div>
+      <div id="alerts" class="alerts"></div>
+    </section>
+
+    <section class="panel" aria-labelledby="map-title">
+      <div class="section-title"><h2 id="map-title">Reuse map</h2><p>Lines connect accounts that share or mimic a password.</p></div>
+      <div class="graph-wrap"><svg id="graph" viewBox="0 0 760 380" role="img" aria-label="Graph of accounts connected by password reuse"></svg></div>
+      <p class="legend"><span class="key solid"></span> same password <span class="key dashed"></span> similar password</p>
+    </section>
+
+    <section class="panel" aria-labelledby="records-title">
+      <div class="section-title"><h2 id="records-title">Account records</h2><p id="table-message" class="message" role="status" aria-live="polite">Update after you change a password on the real service.</p></div>
+      <div class="toolbar">
+        <label>Search<input type="search" id="q" placeholder="Filter by name"></label>
+        <label>Risk<select id="level"><option value="all">All</option><option>Critical</option><option>High</option><option>Medium</option><option>Low</option></select></label>
+        <label>Sort by<select id="sort"><option value="risk">Highest risk</option><option value="name">Name</option><option value="age">Oldest password</option><option value="strength">Weakest password</option></select></label>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Account</th><th>Sensitivity</th><th>2FA</th><th>Password</th><th>Risk</th><th>Matches</th><th><span class="sr">Actions</span></th></tr></thead>
+          <tbody id="entries"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="panel" aria-labelledby="tools-title">
+      <h2 id="tools-title">Import, export &amp; erase</h2>
+      <div class="tools">
+        <div>
+          <h3>Import a password-manager CSV</h3>
+          <p class="note">Chrome, Edge, Firefox, Bitwarden and 1Password exports work. The file contains <strong>plaintext passwords</strong>: it is fingerprinted in memory and never saved by this app. Delete the CSV afterwards.</p>
+          <form id="import-form"><input type="file" id="import-file" accept=".csv,text/csv" required><button type="submit" class="ghost">Import &amp; analyze</button></form>
+        </div>
+        <div>
+          <h3>Export a report</h3>
+          <p class="note">Risk details only &mdash; never passwords or fingerprints.</p>
+          <p><a class="btn ghost" href="/api/export?format=csv">Download CSV</a> <a class="btn ghost" href="/api/export?format=json">Download JSON</a></p>
+        </div>
+        <div>
+          <h3>Erase everything</h3>
+          <p class="note">Deletes every record from this device. It cannot change passwords on real services.</p>
+          <button type="button" class="danger" id="erase-all">Erase all records&hellip;</button>
+        </div>
+      </div>
+      <p id="tools-message" class="message" role="status" aria-live="polite"></p>
+    </section>
+
+    <footer>
+      <p>An awareness tool, not a security audit. It only knows about passwords you add or import, and it can never change a password on a real service.</p>
+    </footer>
+  </main>
+
+  <dialog id="edit-dialog" aria-labelledby="edit-title">
+    <form id="edit-form" class="grid-form" autocomplete="off">
+      <h2 id="edit-title" class="full">Update account</h2>
+      <label>Platform<input id="e-platform" required minlength="2" maxlength="80"></label>
+      <label>Username or email<input id="e-username" maxlength="120"></label>
+      <label>Account sensitivity
+        <select id="e-sensitivity"><option value="standard">Standard</option><option value="important">Important</option><option value="critical">Critical</option></select>
+      </label>
+      <label class="check"><input type="checkbox" id="e-mfa"> Two-factor authentication is on</label>
+      <div class="full field">
+        <label for="e-password">New password <span class="opt">(only if you changed it on the real service)</span></label>
+        <input id="e-password" type="password" maxlength="256" autocomplete="new-password">
+        <div class="live" id="e-live" hidden>
+          <div class="meter" aria-hidden="true"><span id="e-meter"></span></div>
+          <p id="e-strength-text" class="strength-text"></p>
+          <ul id="e-tips" class="tips"></ul>
+        </div>
+      </div>
+      <p id="e-message" class="message full" role="alert"></p>
+      <div class="full actions"><button type="button" class="ghost" id="e-cancel">Cancel</button><button type="submit" class="primary">Save changes</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="confirm-dialog" aria-labelledby="c-title">
+    <form id="confirm-form" class="grid-form" method="dialog">
+      <h2 id="c-title" class="full">Are you sure?</h2>
+      <p id="c-text" class="full"></p>
+      <label class="full" id="c-type-wrap" hidden>Type <b>ERASE</b> to confirm<input id="c-type" autocomplete="off"></label>
+      <div class="full actions"><button type="button" class="ghost" id="c-cancel">Cancel</button><button type="submit" class="danger" id="c-ok">Confirm</button></div>
+    </form>
+  </dialog>
+
+  <script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>
