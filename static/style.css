@@ -55,6 +55,7 @@ button:disabled { opacity: .55; cursor: wait; }
 .meter span { display: block; height: 100%; width: 0; background: var(--critical); transition: width .25s, background .25s; }
 .meter span.t-low { background: var(--low); } .meter span.t-medium { background: var(--medium); } .meter span.t-high { background: var(--high); }
 .strength-text { margin: 8px 0 0; font-size: .9rem; font-weight: 600; }
+.ann-note { display: block; margin-top: 4px; color: var(--muted); font-size: .78rem; }
 .tips { margin: 6px 0 0; padding-left: 18px; font-size: .86rem; color: var(--muted); }
 .tips li.alert-line { color: var(--high); font-weight: 600; }
 

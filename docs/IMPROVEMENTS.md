@@ -43,5 +43,5 @@ This lists everything found in the original project, what was changed, and what 
 - **Browser extension** to check at the moment of sign-up (true real-time prevention).
 - **Offline HIBP**: load the downloadable sorted SHA-1 file for breach checks with zero network.
 - **Private Set Intersection** for cross-device/team reuse detection (the approach in your literature survey [1]).
-- **Learned model** (e.g. ANN) on password-structure features. Not added on purpose: a hand-built, explainable score is easier to defend than a model trained on no real data. If you want it, train on a public dataset and compare against this baseline.
+- **ANN strength estimate**: added as a clearly marked experimental second opinion in the live password preview. It is trained on generated structural examples; labels describe synthetic weak/fair/strong patterns and are not ground truth. The transparent rule score remains authoritative for saved strength and risk calculations. See `reuse_analyzer/data/ann_strength_synthetic.csv` and `reuse_analyzer/train_ann.py`.
 - Packaging as a desktop app (PyInstaller/Tauri); multi-user profiles; scheduled re-check reminders.

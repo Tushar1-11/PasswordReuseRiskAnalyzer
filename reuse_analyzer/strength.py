@@ -12,6 +12,7 @@ from dataclasses import dataclass, field
 from functools import lru_cache
 from pathlib import Path
 
+from .ann import estimate as ann_estimate
 from .crypto import normalize_password
 
 _DATA_FILE = Path(__file__).with_name("data") / "common_passwords.txt"
@@ -39,6 +40,7 @@ class Strength:
     bits: float
     flags: list[str] = field(default_factory=list)
     length: int = 0
+    ann_estimate: dict | None = None
 
     @property
     def suggestions(self) -> list[str]:
@@ -52,7 +54,7 @@ class Strength:
 
     def to_dict(self) -> dict:
         return {"score": self.score, "label": self.label, "bits": round(self.bits, 1),
-                "flags": self.flags, "suggestions": self.suggestions}
+                "flags": self.flags, "suggestions": self.suggestions, "ann_estimate": self.ann_estimate}
 
 
 @lru_cache(maxsize=4)
@@ -192,4 +194,5 @@ def assess(password: str, common: frozenset[str]) -> Strength:
 
     flags = list(dict.fromkeys(flags))  # de-duplicate, keep order
     score = max(0, min(100, _score_from_bits(bits)))
-    return Strength(score=score, label=label_for(score), bits=bits, flags=flags, length=len(pw))
+    return Strength(score=score, label=label_for(score), bits=bits, flags=flags, length=len(pw),
+                    ann_estimate=ann_estimate(pw))

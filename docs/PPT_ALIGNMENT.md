@@ -8,7 +8,7 @@ Several slides describe things the code didn't do. Examiners notice this, so eit
 | 8 Novelty | "real-time detection" | live check while typing (debounced) | keep; now true |
 | 8 Novelty | "risk scoring" | explainable multi-factor score | "Explainable risk scoring: reuse, strength, age, breaches, 2FA" **(new strength)** |
 | *(add)* | | look-alike detection | **New novelty bullet:** "Detects near-duplicate passwords, not just exact reuse" |
-| 11 Tech stack | SQLite/**MongoDB**, SHA-256/**bcrypt**, **ANN, TensorFlow/Scikit-learn** | SQLite only; scrypt+HMAC; no ML | "Flask, SQLite, Python `hashlib` (scrypt, HMAC), vanilla JS/SVG". Remove MongoDB, bcrypt, ANN, TensorFlow unless you add them |
+| 11 Tech stack | SQLite/**MongoDB**, SHA-256/**bcrypt**, **ANN, TensorFlow/Scikit-learn** | SQLite + scrypt/HMAC; small standard-library ANN for strength preview; no TensorFlow/Scikit-learn | "Flask, SQLite, Python `hashlib` (scrypt, HMAC), vanilla JS/SVG, lightweight ANN (synthetic training data)". Remove MongoDB, bcrypt, TensorFlow and Scikit-learn |
 | 12 Implementation | "UI (**Python/Tkinter**)" | Flask web UI | "Local Flask web interface" |
 | 12 Implementation | "**encrypted**, offline SQLite" | plaintext-free DB, keyed fingerprints, `0600`; not SQLCipher | "Local SQLite storing only keyed fingerprints (no plaintext)" |
 | 12 Implementation | "Block all outbound network traffic" | offline by default; optional opt-in breach check | "Fully offline by default; optional k-anonymity breach check" |

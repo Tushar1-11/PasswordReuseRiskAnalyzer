@@ -56,7 +56,10 @@ function liveChecker({ password, sensitivity, mfa, box, meter, text, tips, exclu
       box.hidden = false;
       meter.style.width = `${Math.max(6, s.score)}%`;
       meter.className = s.score >= 80 ? 't-low' : s.score >= 60 ? 't-medium' : s.score >= 40 ? 't-high' : '';
-      text.textContent = `${s.label} · ${s.score}/100`;
+      const ann = s.ann_estimate;
+      text.textContent = ann
+        ? `Rule-based: ${s.label} · ${s.score}/100 | ANN: ${ann.label} · ${ann.score}/100 (${ann.confidence}% confidence)`
+        : `Rule-based: ${s.label} · ${s.score}/100 | ANN model unavailable`;
       tips.replaceChildren(...[
         r.reused && h('li', { class: 'alert-line' }, `Already used for: ${r.reused_on.join(', ')}`),
         r.similar && h('li', { class: 'alert-line' }, `Looks like the password for: ${r.similar_to.join(', ')}`),
